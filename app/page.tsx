@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -34,6 +34,7 @@ type AuthPayload = {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 const AUTH_STORAGE_KEY = "email-agent-auth";
+const THEME_STORAGE_KEY = "email-agent-theme";
 
 const WORKFLOW_TEMPLATE = [
   {
@@ -70,13 +71,28 @@ const STATUS_LABEL: Record<WorkflowStatus, string> = {
 };
 
 const STATUS_BADGE: Record<WorkflowStatus, string> = {
-  idle: "text-slate-500",
-  in_progress: "text-blue-500",
-  completed: "text-emerald-500",
-  error: "text-rose-500",
+  idle: "text-[color:var(--badge-idle)]",
+  in_progress: "text-[color:var(--badge-progress)]",
+  completed: "text-[color:var(--badge-success)]",
+  error: "text-[color:var(--badge-error)]",
+};
+
+const STEP_VARIANTS: Record<WorkflowStatus, string> = {
+  idle: "border-[color:var(--status-idle-border)] bg-[color:var(--status-idle-bg)] text-[color:var(--status-idle-text)]",
+  in_progress: "border-[color:var(--status-progress-border)] bg-[color:var(--status-progress-bg)] text-[color:var(--status-progress-text)]",
+  completed: "border-[color:var(--status-success-border)] bg-[color:var(--status-success-bg)] text-[color:var(--status-success-text)]",
+  error: "border-[color:var(--status-error-border)] bg-[color:var(--status-error-bg)] text-[color:var(--status-error-text)]",
+};
+
+const STEP_ICON_VARIANTS: Record<WorkflowStatus, string> = {
+  idle: "border-[color:var(--status-idle-border)] bg-[color:var(--surface-strong)] text-[color:var(--status-idle-text)]",
+  in_progress: "border-[color:var(--status-progress-border)] bg-[color:var(--surface-strong)] text-[color:var(--status-progress-text)]",
+  completed: "border-[color:var(--status-success-border)] bg-[color:var(--surface-strong)] text-[color:var(--status-success-text)]",
+  error: "border-[color:var(--status-error-border)] bg-[color:var(--surface-strong)] text-[color:var(--status-error-text)]",
 };
 
 export default function Home() {
+  const [theme, setTheme] = useState<"light" | "dark">("light");
   const [instruction, setInstruction] = useState("");
   const [serverSteps, setServerSteps] = useState<WorkflowStep[]>([]);
   const [currentStatus, setCurrentStatus] = useState<WorkflowStatus>("idle");
@@ -85,6 +101,25 @@ export default function Home() {
   const [authError, setAuthError] = useState<string | null>(null);
   const [user, setUser] = useState<AuthPayload | null>(null);
   const [generatedEmail, setGeneratedEmail] = useState<AgentResponse["generated_email"]>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme: "light" | "dark" = stored === "light" || stored === "dark" ? (stored as "light" | "dark") : prefersDark ? "dark" : "light";
+    setTheme(initialTheme);
+    document.body.dataset.theme = initialTheme;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    document.body.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -150,6 +185,10 @@ export default function Home() {
       };
     });
   }, [serverSteps]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const handleGoogleConnect = () => {
     if (typeof window === "undefined") {
@@ -228,137 +267,188 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center px-4 py-16">
-      <div className="w-full max-w-3xl space-y-8 text-center">
-        <div className="space-y-3">
-          <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">
-            Email Agent
-          </h1>
-          <p className="text-base text-slate-500">
-            A minimalistic UI for task automation
-          </p>
+    <main className="relative flex min-h-screen flex-col overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[color:var(--background)] transition-colors duration-300" />
+        <div className="absolute left-[-15%] top-[-20%] h-[420px] w-[420px] rounded-full bg-[color:var(--accent-soft)] blur-[160px]" />
+        <div className="absolute right-[-20%] bottom-[-25%] h-[520px] w-[520px] rounded-full bg-[color:var(--accent-soft)] blur-[200px]" />
+      </div>
+
+      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 pt-12">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-elevated)] text-lg text-[color:var(--accent)] shadow-sm shadow-black/5">
+            <MailIcon status="completed" />
+          </div>
+          <div className="text-left">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[color:var(--badge-idle)]">
+              Email Agent
+            </p>
+            <h1 className="text-3xl font-semibold text-[color:var(--text-primary)] sm:text-4xl">
+              Automate your outreach
+            </h1>
+          </div>
         </div>
+        <button
+          onClick={toggleTheme}
+          type="button"
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border-soft)] bg-[color:var(--surface-strong)] text-[color:var(--text-primary)] shadow-sm shadow-black/5 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+          aria-label="Toggle theme"
+        >
+          {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+        </button>
+      </header>
 
-        <div className="rounded-3xl border border-white/70 bg-white/90 p-8 shadow-xl shadow-slate-200/40 backdrop-blur">
-          <div className="space-y-6">
-            <button
-              onClick={handleGoogleConnect}
-              className="mx-auto flex w-full max-w-sm items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:shadow-md"
-              type="button"
-            >
-              <GoogleIcon />
-              <span>
-                {user?.email ? `Connected as ${user.name ?? user.email}` : "Connect with Google"}
-              </span>
-            </button>
-            {authError && (
-              <p className="text-sm text-rose-500">{authError}</p>
-            )}
-
-            <div className="mx-auto flex w-full max-w-2xl items-center gap-3 rounded-full border border-slate-200 bg-slate-50 p-2">
-              <input
-                className="h-11 flex-1 rounded-full border-none bg-transparent px-4 text-sm text-slate-700 outline-none placeholder:text-slate-400"
-                placeholder="e.g., 'Send a welcome email to john@example.com'"
-                value={instruction}
-                onChange={(event) => setInstruction(event.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !instruction.trim()}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
-                type="button"
-              >
-                <ArrowIcon className={isSubmitting ? "animate-spin" : ""} />
-              </button>
-            </div>
-            {submitError && (
-              <p className="text-sm text-rose-500">{submitError}</p>
-            )}
-
-            <div className="space-y-4 text-left">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Workflow Automation
-                </h2>
-                <p className="text-sm text-slate-500">
-                  Track each stage as your instruction becomes a delivered email.
+      <section className="mx-auto mt-12 w-full max-w-5xl px-6 pb-16">
+        <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-[32px] border border-[color:var(--border-soft)] bg-[color:var(--surface-primary)] p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] transition-colors backdrop-blur">
+            <div className="flex flex-col gap-8">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-left">
+                  <h2 className="text-2xl font-semibold text-[color:var(--text-primary)]">
+                    Launch a task
+                  </h2>
+                  <p className="text-sm text-[color:var(--text-muted)]">
+                    Describe the email you want to send and track every stage of the automation.
+                  </p>
+                </div>
+                <button
+                  onClick={handleGoogleConnect}
+                  className="flex items-center justify-center gap-3 rounded-full border border-[color:var(--border-soft)] bg-[color:var(--surface-strong)] px-5 py-3 text-sm font-medium text-[color:var(--text-primary)] shadow-sm shadow-black/5 transition hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                  type="button"
+                >
+                  <GoogleIcon />
+                  <span>
+                    {user?.email ? `Connected as ${user.name ?? user.email}` : "Connect with Google"}
+                  </span>
+                </button>
+              </div>
+              {authError && (
+                <p className="rounded-2xl border border-[color:var(--status-error-border)] bg-[color:var(--status-error-bg)] px-4 py-3 text-sm text-[color:var(--status-error-text)]">
+                  {authError}
                 </p>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <label className="text-left text-sm font-medium text-[color:var(--text-primary)]">
+                  Automation instruction
+                </label>
+                <div className="flex items-center gap-3 rounded-2xl border border-[color:var(--border-strong)] bg-[color:var(--surface-strong)] px-4 py-2 shadow-inner shadow-black/5">
+                  <input
+                    className="h-12 flex-1 bg-transparent text-sm text-[color:var(--text-primary)] outline-none placeholder:text-[color:var(--text-muted)]"
+                    placeholder="e.g., ‘Send a welcome email to john@example.com’"
+                    value={instruction}
+                    onChange={(event) => setInstruction(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                  />
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || !instruction.trim()}
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--accent)] text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+                    type="button"
+                  >
+                    <ArrowIcon className={isSubmitting ? "animate-spin" : ""} />
+                  </button>
+                </div>
+                {submitError && (
+                  <p className="text-sm text-[color:var(--status-error-text)]">{submitError}</p>
+                )}
               </div>
 
-              <div className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6">
-                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                  {workflowSteps.map((step, index) => {
+              <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-strong)] p-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[color:var(--text-primary)]">
+                      Workflow timeline
+                    </h3>
+                    <p className="text-sm text-[color:var(--text-muted)]">
+                      Each step updates in real time as the automation progresses.
+                    </p>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-[color:var(--text-muted)]">Current status: </span>
+                    <span className={`font-medium ${STATUS_BADGE[currentStatus]}`}>
+                      {STATUS_LABEL[currentStatus]}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  {workflowSteps.map((step) => {
                     const Icon = step.icon;
-                    const isLast = index === workflowSteps.length - 1;
                     return (
-                      <div key={step.key} className="flex flex-1 items-center gap-4">
+                      <div
+                        key={step.key}
+                        className={`flex items-start gap-4 rounded-2xl border p-4 transition ${STEP_VARIANTS[step.status]}`}
+                      >
                         <div
-                          className={`flex h-14 w-14 items-center justify-center rounded-full border text-lg font-medium transition ${
-                            step.status === "completed"
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-600"
-                              : step.status === "in_progress"
-                              ? "border-blue-200 bg-blue-50 text-blue-600"
-                              : step.status === "error"
-                              ? "border-rose-200 bg-rose-50 text-rose-600"
-                              : "border-slate-200 bg-white text-slate-500"
-                          }`}
+                          className={`flex h-12 w-12 items-center justify-center rounded-xl border text-lg shadow-sm shadow-black/5 ${STEP_ICON_VARIANTS[step.status]}`}
                         >
                           <Icon status={step.status} />
                         </div>
                         <div className="text-left">
-                          <p className="text-sm font-semibold text-slate-800">
+                          <p className="text-sm font-semibold text-[color:var(--text-primary)]">
                             {step.label}
                           </p>
-                          <p className="text-xs text-slate-500">{step.detail ?? step.caption}</p>
+                          <p className="text-xs text-[color:var(--text-muted)]">
+                            {step.detail ?? step.caption}
+                          </p>
                         </div>
-                        {!isLast && (
-                          <div className="hidden flex-1 items-center sm:flex">
-                            <span className="h-px w-full border-b border-dashed border-slate-200" />
-                          </div>
-                        )}
                       </div>
                     );
                   })}
                 </div>
-                <div className="mt-6 text-sm">
-                  <span className="text-slate-500">Current status: </span>
-                  <span className={`font-medium ${STATUS_BADGE[currentStatus]}`}>
-                    {STATUS_LABEL[currentStatus]}
-                  </span>
-                </div>
               </div>
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-[color:var(--border-soft)] bg-[color:var(--surface-primary)] p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] transition-colors backdrop-blur">
+            <div className="flex h-full flex-col">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.28em] text-[color:var(--badge-idle)]">
+                Email preview
+              </h3>
+              {generatedEmail ? (
+                <div className="mt-6 flex flex-1 flex-col gap-4 text-[color:var(--text-primary)]">
+                  <div className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-strong)] px-4 py-3 text-sm">
+                    <p>
+                      <span className="font-semibold text-[color:var(--text-muted)]">To:</span>{" "}
+                      {generatedEmail.recipient_name
+                        ? `${generatedEmail.recipient_name} <${generatedEmail.recipient_email}>`
+                        : generatedEmail.recipient_email}
+                    </p>
+                    <p className="mt-2">
+                      <span className="font-semibold text-[color:var(--text-muted)]">Subject:</span>{" "}
+                      {generatedEmail.subject}
+                    </p>
+                  </div>
+                  <div className="flex-1 overflow-hidden rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-strong)] px-4 py-5 text-sm leading-6 text-[color:var(--text-primary)] shadow-inner shadow-black/5">
+                    <div className="max-h-80 space-y-3 overflow-y-auto pr-1">
+                      {generatedEmail.body.split("\n").map((line, index) => (
+                        <p key={`${index}-${line.slice(0, 8)}`} className="text-[color:var(--text-primary)]">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 flex flex-1 flex-col items-center justify-center gap-4 text-center text-[color:var(--text-muted)]">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-elevated)] text-[color:var(--accent)] shadow-sm shadow-black/5">
+                    <PreviewPlaceholderIcon />
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-base font-medium text-[color:var(--text-primary)]">
+                      Your AI-crafted email will appear here
+                    </p>
+                    <p className="text-sm">
+                      Connect your inbox, describe the task, and the agent will draft and send the message for you.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {generatedEmail && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-left shadow-lg shadow-slate-200/30">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-              Generated Email Preview
-            </h3>
-            <div className="mt-4 space-y-3 text-slate-700">
-              <p className="text-sm">
-                <span className="font-medium text-slate-600">To:</span>{" "}
-                {generatedEmail.recipient_name
-                  ? `${generatedEmail.recipient_name} <${generatedEmail.recipient_email}>`
-                  : generatedEmail.recipient_email}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium text-slate-600">Subject:</span>{" "}
-                {generatedEmail.subject}
-              </p>
-              <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-                {generatedEmail.body.split("\n").map((line, index) => (
-                  <p key={index} className="mb-2 last:mb-0">
-                    {line}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      </section>
     </main>
   );
 }
@@ -472,6 +562,36 @@ function GoogleIcon() {
         d="M9 3.58c1.32 0 2.5.45 3.43 1.34l2.57-2.57C13.46.88 11.42 0 9 0 5.48 0 2.47 2.02 1 4.94l3.04 2.3C4.72 5.84 6.68 4.28 9 4.28z"
         fill="#EA4335"
       />
+    </svg>
+  );
+}
+
+function SunIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 3v2M12 19v2M5.64 5.64l1.41 1.41M16.95 16.95l1.41 1.41M3 12h2M19 12h2M5.64 18.36l1.41-1.41M16.95 7.05l1.41-1.41" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        d="M21 12.79A9 9 0 0 1 11.21 3 7 7 0 1 0 21 12.79Z"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function PreviewPlaceholderIcon() {
+  return (
+    <svg aria-hidden viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={1.6}>
+      <rect x="3" y="4" width="18" height="16" rx="3" />
+      <path d="M7 8h10M7 12h6M7 16h4" strokeLinecap="round" />
     </svg>
   );
 }

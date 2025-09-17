@@ -1,26 +1,89 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #f5f6fb;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --surface-primary: rgba(255, 255, 255, 0.92);
+  --surface-elevated: rgba(255, 255, 255, 0.72);
+  --surface-strong: #ffffff;
+  --border-soft: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+  --badge-idle: #64748b;
+  --badge-progress: #2563eb;
+  --badge-success: #059669;
+  --badge-error: #ef4444;
+  --status-idle-bg: rgba(148, 163, 184, 0.14);
+  --status-idle-border: rgba(148, 163, 184, 0.24);
+  --status-idle-text: #64748b;
+  --status-progress-bg: rgba(37, 99, 235, 0.16);
+  --status-progress-border: rgba(37, 99, 235, 0.3);
+  --status-progress-text: #2563eb;
+  --status-success-bg: rgba(16, 185, 129, 0.18);
+  --status-success-border: rgba(5, 150, 105, 0.32);
+  --status-success-text: #059669;
+  --status-error-bg: rgba(239, 68, 68, 0.16);
+  --status-error-border: rgba(239, 68, 68, 0.3);
+  --status-error-text: #ef4444;
+  --input-bg: rgba(248, 250, 252, 0.85);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.45);
+  --scrollbar-track: rgba(148, 163, 184, 0.2);
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--text-primary);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #050816;
+  --text-primary: #e2e8f0;
+  --text-muted: #94a3b8;
+  --surface-primary: rgba(15, 23, 42, 0.85);
+  --surface-elevated: rgba(15, 23, 42, 0.7);
+  --surface-strong: #0f172a;
+  --border-soft: rgba(148, 163, 184, 0.2);
+  --border-strong: rgba(148, 163, 184, 0.35);
+  --accent: #60a5fa;
+  --accent-strong: #3b82f6;
+  --accent-soft: rgba(96, 165, 250, 0.16);
+  --badge-idle: #94a3b8;
+  --badge-progress: #60a5fa;
+  --badge-success: #34d399;
+  --badge-error: #fb7185;
+  --status-idle-bg: rgba(148, 163, 184, 0.15);
+  --status-idle-border: rgba(148, 163, 184, 0.25);
+  --status-idle-text: #94a3b8;
+  --status-progress-bg: rgba(96, 165, 250, 0.2);
+  --status-progress-border: rgba(96, 165, 250, 0.35);
+  --status-progress-text: #60a5fa;
+  --status-success-bg: rgba(52, 211, 153, 0.24);
+  --status-success-border: rgba(74, 222, 128, 0.4);
+  --status-success-text: #34d399;
+  --status-error-bg: rgba(251, 113, 133, 0.2);
+  --status-error-border: rgba(248, 113, 113, 0.4);
+  --status-error-text: #fb7185;
+  --input-bg: rgba(15, 23, 42, 0.85);
+  --scrollbar-thumb: rgba(148, 163, 184, 0.45);
+  --scrollbar-track: rgba(51, 65, 85, 0.45);
+}
+
+body::-webkit-scrollbar {
+  width: 0.6rem;
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 999px;
+}
+
+body::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
 }
